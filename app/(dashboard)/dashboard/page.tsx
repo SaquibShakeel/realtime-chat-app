@@ -9,6 +9,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 const page = async ({}) => {
+  console.log("env", process.env.NEXT_PUBLIC_PUSHER_APP_KEY);
+  
   const session = await getServerSession(authOptions)
   if (!session) notFound()
 
