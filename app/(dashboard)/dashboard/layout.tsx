@@ -30,6 +30,12 @@ const sidebarOptions: SidebarOption[] = [
     href: '/dashboard/add',
     Icon: 'UserPlus',
   },
+  {
+    id: 2,
+    name: 'Demo Public Chat',
+    href: '/dashboard/chat/demo',
+    Icon: 'Users',
+  }
 ]
 
 const Layout = async ({ children }: LayoutProps) => {

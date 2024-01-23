@@ -1,3 +1,4 @@
+import { title } from 'process'
 import ChatInput from '../../../../components/ChatInput'
 import Messages from '../../../../components/Messages'
 import { fetchRedis } from '../../../../helpers/redis'
@@ -6,6 +7,7 @@ import { messageArrayValidator } from '../../../../lib/validations/message'
 import { getServerSession } from 'next-auth'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
+import { MessageWithUser } from '../../../../lib/validations/message'
 
 // The following generateMetadata functiion was written after the video and is purely optional
 export async function generateMetadata({
@@ -15,6 +17,10 @@ export async function generateMetadata({
 }) {
   const session = await getServerSession(authOptions)
   if (!session) notFound()
+
+  if(params.chatId === "demo") {
+    return { title: `FriendZone | demo chat` }
+  }
   const [userId1, userId2] = params.chatId.split('--')
   const { user } = session
 
@@ -43,7 +49,7 @@ async function getChatMessages(chatId: string) {
       -1
     )
 
-    const dbMessages = results.map((message) => JSON.parse(message) as Message)
+    const dbMessages = results.map((message) => JSON.parse(message) as MessageWithUser)
 
     const reversedDbMessages = dbMessages.reverse()
 
@@ -61,6 +67,46 @@ const page = async ({ params }: PageProps) => {
   if (!session) notFound()
 
   const { user } = session
+
+  if(chatId === "demo") {
+    const initialMessages = await getChatMessages(chatId)
+
+  return (
+    <div className='flex-1 justify-between flex flex-col h-full max-h-[calc(100vh-6rem)]'>
+      <div className='flex sm:items-center justify-between py-3 border-b-2 border-gray-200'>
+        <div className='relative flex items-center space-x-4'>
+          <div className='relative'>
+            <div className='relative w-8 sm:w-12 h-8 sm:h-12'>
+              <Image
+                fill
+                referrerPolicy='no-referrer'
+                src="/profile.jpg"
+                alt={`Demo Chat profile picture`}
+                className='rounded-full'
+              />
+            </div>
+          </div>
+
+          <div className='flex flex-col leading-tight'>
+            <div className='text-xl flex items-center'>
+              <span className='text-gray-700 mr-3 font-semibold'>
+                Demo Chat
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Messages
+        chatId={chatId}
+        sessionImg={session.user.image}
+        sessionId={session.user.id}
+        initialMessages={initialMessages}
+      />
+      <ChatInput chatId={chatId} />
+    </div>
+  )
+  }
 
   const [userId1, userId2] = chatId.split('--')
 
@@ -87,8 +133,8 @@ const page = async ({ params }: PageProps) => {
               <Image
                 fill
                 referrerPolicy='no-referrer'
-                src={chatPartner.image}
-                alt={`${chatPartner.name} profile picture`}
+                src={chatPartner?.image}
+                alt={`${chatPartner.name || "Demo Chat"} profile picture`}
                 className='rounded-full'
               />
             </div>

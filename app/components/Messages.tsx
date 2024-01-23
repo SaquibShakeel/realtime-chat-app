@@ -1,20 +1,21 @@
 'use client'
 
+import { fetchRedis } from '../helpers/redis'
 import { pusherClient } from '../lib/pusher'
 import { cn, 
     toPusherKey
  } from '../lib/utils'
-import { Message } from '../lib/validations/message'
+import { MessageWithUser } from '../lib/validations/message'
 import { format } from 'date-fns'
 import Image from 'next/image'
 import { FC, useEffect, useRef, useState } from 'react'
 
 interface MessagesProps {
-  initialMessages: Message[]
+  initialMessages: MessageWithUser[]
   sessionId: string
   chatId: string
   sessionImg: string | null | undefined
-  chatPartner: User
+  chatPartner?: User
 }
 
 const Messages: FC<MessagesProps> = ({
@@ -24,14 +25,14 @@ const Messages: FC<MessagesProps> = ({
   chatPartner,
   sessionImg,
 }) => {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [messages, setMessages] = useState<MessageWithUser[]>(initialMessages)
 
   useEffect(() => {
     pusherClient.subscribe(
       toPusherKey(`chat:${chatId}`)
     )
 
-    const messageHandler = (message: Message) => {
+    const messageHandler = (message: MessageWithUser) => {
       setMessages((prev) => [message, ...prev])
     }
 
@@ -57,7 +58,7 @@ const Messages: FC<MessagesProps> = ({
       className='flex h-full flex-1 flex-col-reverse gap-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch'>
       <div ref={scrollDownRef} />
 
-      {messages.map((message, index) => {
+      {messages.map(async(message, index) => {
         const isCurrentUser = message.senderId === sessionId
 
         const hasNextMessageFromSameUser =
@@ -80,7 +81,7 @@ const Messages: FC<MessagesProps> = ({
                   }
                 )}>
                 <span
-                  className={cn('px-4 py-2 rounded-lg inline-block', {
+                  className={cn('px-4 py-2 relative rounded-lg inline-block', {
                     'bg-indigo-600 text-white': isCurrentUser,
                     'bg-gray-200 text-gray-900': !isCurrentUser,
                     'rounded-br-none':
@@ -88,6 +89,7 @@ const Messages: FC<MessagesProps> = ({
                     'rounded-bl-none':
                       !hasNextMessageFromSameUser && !isCurrentUser,
                   })}>
+                    {!isCurrentUser && !chatPartner ? <span className='absolute -top-5 left-0 text-[12px] text-blue-500 font-semibold text-nowrap'>{message.name}</span>: null}
                   {message.text}{' '}
                   <span className='ml-2 text-xs text-gray-400'>
                     {formatTimestamp(message.timestamp)}
@@ -104,7 +106,7 @@ const Messages: FC<MessagesProps> = ({
                 <Image
                   fill
                   src={
-                    isCurrentUser ? (sessionImg as string) : chatPartner.image
+                    isCurrentUser ? (sessionImg as string) : message.image
                   }
                   alt='Profile picture'
                   referrerPolicy='no-referrer'

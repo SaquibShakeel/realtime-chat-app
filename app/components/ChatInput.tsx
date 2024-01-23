@@ -7,7 +7,7 @@ import TextareaAutosize from 'react-textarea-autosize'
 import Button from './ui/Button'
 
 interface ChatInputProps {
-  chatPartner: User
+  chatPartner?: User
   chatId: string
 }
 
@@ -24,7 +24,7 @@ const ChatInput: FC<ChatInputProps> = ({ chatPartner, chatId }) => {
       await axios.post('/api/message/send', { text: input, chatId })
       setInput('')
       textareaRef.current?.focus()
-    } catch {
+    } catch(e) {
       toast.error('Something went wrong. Please try again later.')
     } finally {
       setIsLoading(false)
@@ -45,7 +45,7 @@ const ChatInput: FC<ChatInputProps> = ({ chatPartner, chatId }) => {
           rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={`Message ${chatPartner.name}`}
+          placeholder={`Message ${chatPartner?.name || "Demo"}`}
           className='block w-full resize-none border-0 bg-transparent text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:py-1.5 sm:text-sm sm:leading-6'
         />
 
